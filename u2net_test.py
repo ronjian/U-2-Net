@@ -31,34 +31,40 @@ def normPRED(d):
     return dn
 
 def save_output(image_name,pred,d_dir):
-
     predict = pred
     predict = predict.squeeze()
     predict_np = predict.cpu().data.numpy()
 
-    im = Image.fromarray(predict_np*255).convert('RGB')
+    im = Image.fromarray(predict_np * 255).convert('RGB')
     img_name = image_name.split("/")[-1]
-    image = io.imread(image_name)
-    imo = im.resize((image.shape[1],image.shape[0]),resample=Image.BILINEAR)
-
+    ori_image = io.imread(image_name)
+    width = ori_image.shape[1]
+    height = ori_image.shape[0]
+    imo = im.resize((width, height),resample=Image.BILINEAR)
     pb_np = np.array(imo)
-
     aaa = img_name.split(".")
     bbb = aaa[0:-1]
     imidx = bbb[0]
     for i in range(1,len(bbb)):
         imidx = imidx + "." + bbb[i]
 
-    imo.save(d_dir+imidx+'.png')
+    # imo.save(d_dir+imidx+'.png')
+
+    new_im = Image.new('RGB', (width * 2, height))
+    new_im.paste(imo, (0, 0))
+    ori_image = Image.fromarray(ori_image.astype('uint8')).convert('RGB')
+    new_im.paste(ori_image, (width, 0))
+    new_im.save(d_dir+imidx+'.png')
 
 def main():
-
     # --------- 1. get image path and name ---------
-    model_name='u2net'#u2netp
+    model_name= 'u2netp'
 
 
-    image_dir = './test_data/test_images/'
-    prediction_dir = './test_data/' + model_name + '_results/'
+    # image_dir = './test_data/test_images/'
+    # prediction_dir = './test_data/' + model_name + '_results/'
+    image_dir = './test_data/neice_images/'
+    prediction_dir = './test_data/neice_images_results/'
     model_dir = './saved_models/'+ model_name + '/' + model_name + '.pth'
 
     img_name_list = glob.glob(image_dir + '*')
@@ -90,7 +96,6 @@ def main():
 
     # --------- 4. inference for each image ---------
     for i_test, data_test in enumerate(test_salobj_dataloader):
-
         print("inferencing:",img_name_list[i_test].split("/")[-1])
 
         inputs_test = data_test['image']
